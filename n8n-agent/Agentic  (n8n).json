@@ -1,0 +1,582 @@
+{
+  "name": "Agentic Case Analyst (n8n)",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        112,
+        0
+      ],
+      "id": "819922f2-96f8-46f0-bb23-94929add50fc",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "b199f5af-8fcc-4b1d-abe8-4e14d82f49c0",
+              "name": "email_text",
+              "value": "The ABC product has the same error I had last month.  It was resolved at the time, but it happened again after the last update. Please check the history",
+              "type": "string"
+            },
+            {
+              "id": "41bfad7e-932c-44f5-b453-5074ca108659",
+              "name": "iteration",
+              "value": 0,
+              "type": "number"
+            },
+            {
+              "id": "deef70b8-76ad-40d2-a2eb-abaebadba927",
+              "name": "=historical_context",
+              "value": "",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        272,
+        0
+      ],
+      "id": "21fbdc11-e481-44a8-97a2-d9a444e857b9",
+      "name": "Input"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=",
+        "options": {
+          "systemMessage": "=You are a Case Analyst AI.\n\nYour task is to decide the NEXT ACTION to take on a customer case.\nYou do NOT respond to the customer.\n\nAllowed actions:\n- CONCLUDE\n- REQUEST_CONTEXT\n- CONSULT_HISTORY\n- ESCALATE\n\nRules:\nEscalate if legal or financial risk is detected\n- Escalate if ambiguity is high\n- Request context if critical information is missing\n- Conclude only if a human can act without rework\n- Do NOT invent information\n\nInput email:\n{{ $json.email_text }}\n\nHistorical context (if any):\n{{ $json.historical_context }}\n\nRespond ONLY in valid JSON:\n{\n  \"action\": \"<ONE_ACTION>\",\n  \"reason\": \"<short explanation>\"\n}"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3,
+      "position": [
+        448,
+        0
+      ],
+      "id": "aa39b3ee-a0fa-4be4-b789-8b4474085673",
+      "name": "AI Agent",
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4.1-mini"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        448,
+        224
+      ],
+      "id": "9d88efe2-e355-4a7e-9b84-61a02e27efbf",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "rdyvP5xXGd8TNdY1",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.agent_decision.parseJson().action }}",
+                    "rightValue": "=ESCALATE",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "798de50e-0832-4d2f-bc0d-73435c56adb7"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "ESCALATE"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "aaf88230-707d-4cc2-a5d1-88fe1fc51e27",
+                    "leftValue": "={{ $json.agent_decision.parseJson().action }}",
+                    "rightValue": "REQUEST_CONTEXT",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "REQUEST_CONTEXT"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "4a4c3e44-6dd0-45e2-84de-b31cd9eb74ed",
+                    "leftValue": "={{ $json.agent_decision.parseJson().action }}",
+                    "rightValue": "CONSULT_HISTORY",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "CONSULT_HISTORY"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "0537326d-fdba-4231-b3ee-6b6d1b6803b6",
+                    "leftValue": "={{ $json.agent_decision.parseJson().action }}",
+                    "rightValue": "CONCLUDE",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "CONCLUDE"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        1168,
+        -32
+      ],
+      "id": "ec1a397a-089e-45aa-986d-b8233e4ee55e",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "da53d266-7225-4f8c-aed5-9ae8f31b4110",
+              "name": "status",
+              "value": "Missing Information",
+              "type": "string"
+            },
+            {
+              "id": "602422cf-53c8-4712-8812-d70795d5834b",
+              "name": "suggested_Action",
+              "value": "Request more details from customer",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1504,
+        -32
+      ],
+      "id": "e2c502ba-2d98-47b7-87f0-02ca8bda6f25",
+      "name": "Missing Information"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "4fbc639f-ff2e-4e49-8700-485846656671",
+              "name": "status",
+              "value": "Ready",
+              "type": "string"
+            },
+            {
+              "id": "766d5646-a881-4820-9660-231778f93922",
+              "name": "note",
+              "value": "Request more details from customer",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1504,
+        320
+      ],
+      "id": "0a129e7e-ad64-409b-af6a-6432cb00b1b1",
+      "name": "Success"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "1fda0261-b098-4fe3-880d-210f031cf864",
+              "name": "status",
+              "value": "Consulted History",
+              "type": "string"
+            },
+            {
+              "id": "07aa3e14-9edb-40d6-b2c9-447c0b5892e0",
+              "name": "note",
+              "value": "Simulated historical lookup",
+              "type": "string"
+            },
+            {
+              "id": "29fe5dfe-7459-4f8b-90d6-506496278fab",
+              "name": "historical_context",
+              "value": "Previous case with product ABC was resolved by restarting service X after update.",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1504,
+        144
+      ],
+      "id": "9e8feb6f-a8c1-4bcd-9d60-53e79fa08e08",
+      "name": "Simulated historical lookup"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "d651b18f-48c5-4858-97a0-013bc3d0f889",
+              "name": "status",
+              "value": "Needs Review",
+              "type": "string"
+            },
+            {
+              "id": "ac31b57d-2a71-4ab1-9e28-84af8ed74611",
+              "name": "reason",
+              "value": "Max iteration reached",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2256,
+        400
+      ],
+      "id": "bb2957bc-f6f1-4e5e-86d0-646c0795f423",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "1dd01653-f5bf-4e84-84fc-da4060be80c7",
+              "name": "agent_decision",
+              "value": "={{ JSON.parse($json.output) }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        816,
+        0
+      ],
+      "id": "63dbe0b8-b94d-4674-8a96-79a149e3998c",
+      "name": "Parse Agent Output"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "c75e2dd5-8157-4dfb-8263-745dc9c039f5",
+              "name": "status",
+              "value": "Need Review",
+              "type": "string"
+            },
+            {
+              "id": "a4d06bf4-3f5f-4d53-9161-ba43cf733649",
+              "name": "note",
+              "value": "Escalated by AI agent",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1504,
+        -224
+      ],
+      "id": "0130b0ae-682a-484e-bd6e-c50b2d3aafc0",
+      "name": "Needs review"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "d0180a40-a53c-4e63-9503-c0273aec61e2",
+              "name": "=iteration",
+              "value": "={{ ($json.iteration ?? 0) + 1 }}",
+              "type": "number"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1712,
+        144
+      ],
+      "id": "42ab389b-4008-4772-9146-ecc76502b963",
+      "name": "iteration"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "5d30e32d-4336-4723-9090-319ab62680eb",
+              "leftValue": "={{ $json.iteration }}",
+              "rightValue": 3,
+              "operator": {
+                "type": "number",
+                "operation": "lt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        2048,
+        384
+      ],
+      "id": "745d5beb-28ee-443e-b591-10b94600b68a",
+      "name": "Iteration true"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Input": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Parse Agent Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Needs review",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Missing Information",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Simulated historical lookup",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simulated historical lookup": {
+      "main": [
+        [
+          {
+            "node": "iteration",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Agent Output": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "iteration": {
+      "main": [
+        [
+          {
+            "node": "Iteration true",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Iteration true": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "9c03f978-e0eb-4477-a781-8235fe78389f",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "5bbd692f4f3dd5e1758a66f658c230187050fb85c9d02841b98d0a9249d2daca"
+  },
+  "id": "tzjcMJnmD2TJ3JS4",
+  "tags": []
+}
