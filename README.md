@@ -127,7 +127,7 @@ Some of the most important takeaways from this project:
 - Agents are **not** prompts
 - State must be explicit
 - LLMs should decide, not orchestrate
-- Frameworks are powerful but opinionated
+- Frameworks are powerful
 - Designing first makes frameworks safer
 
 These learnings are documented in detail in:
